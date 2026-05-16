@@ -42,8 +42,8 @@ export function getMe() {
   return api.get('/auth/me')
 }
 
-export function getPosts(page = 1, size = 10) {
-  return api.get('/posts', { params: { page, size } })
+export function getPosts(page = 1, size = 10, userId?: number | string) {
+  return api.get('/posts', { params: { page, size, userId } })
 }
 
 export function createPost(content: string) {

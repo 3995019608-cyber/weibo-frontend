@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 
+const props = withDefaults(defineProps<{ title?: string }>(), { title: '微薄' })
+
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
-function handleLogout() {
-  userStore.logout()
-  router.push('/login')
-}
+const isHome = computed(() => route.path === '/')
+
+const avatarInitial = computed(() => {
+  const name = userStore.user?.nickname || '用户'
+  return name.charAt(0)
+})
 </script>
 
 <template>
   <nav class="navbar">
-    <div class="navbar-inner">
-      <router-link to="/" class="navbar-brand">微薄</router-link>
-
-      <div class="navbar-links">
-        <template v-if="userStore.isLoggedIn">
-          <router-link to="/profile" class="navbar-link">
-            {{ userStore.user?.nickname || '用户' }}
-          </router-link>
-          <button class="btn btn-outline" @click="handleLogout">
-            退出
-          </button>
-        </template>
-        <template v-else>
-          <router-link to="/login" class="navbar-link">登录</router-link>
-          <router-link to="/register" class="btn btn-outline">注册</router-link>
-        </template>
-      </div>
+    <div class="navbar-left">
+      <button v-if="!isHome" class="navbar-back" @click="router.back()">
+        &lt;
+      </button>
+    </div>
+    <h1 class="navbar-title">{{ props.title }}</h1>
+    <div class="navbar-right">
+      <router-link v-if="userStore.isLoggedIn" to="/profile" class="navbar-user">
+        <span class="navbar-avatar">{{ avatarInitial }}</span>
+        <span class="navbar-nickname">{{ userStore.user?.nickname || '用户' }}</span>
+      </router-link>
     </div>
   </nav>
 </template>

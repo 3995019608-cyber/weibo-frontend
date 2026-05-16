@@ -1,3 +1,20 @@
+<template>
+  <div class="container">
+    <CreatePost @created="onCreated" />
+    <div v-if="posts.length === 0 && !loading" class="empty">暂无动态</div>
+    <PostCard
+      v-for="post in posts"
+      :key="post.id"
+      :post="post"
+      @like="handleLike(post)"
+      @delete="handleDelete(post)"
+      @click="goDetail(post.id)"
+    />
+    <div v-if="loading" class="loading">加载中...</div>
+    <div v-if="noMore && posts.length > 0" class="empty">没有更多了</div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -9,108 +26,82 @@ const router = useRouter()
 
 const posts = ref<any[]>([])
 const page = ref(1)
-const hasMore = ref(true)
+const noMore = ref(false)
 const loading = ref(false)
-const refreshing = ref(false)
 
-async function loadPosts(reset = false) {
-  if (loading.value) return
-  if (reset) {
-    page.value = 1
-    hasMore.value = true
-    refreshing.value = true
-  }
+async function loadPosts() {
+  if (loading.value || noMore.value) return
   loading.value = true
   try {
-    const res: any = await getPosts(page.value, 10)
-    const pageData = res.data.data
-    const list: any[] = pageData?.records || []
-    if (reset) {
-      posts.value = list
-    } else {
-      posts.value.push(...list)
-    }
-    hasMore.value = list.length >= 10
-    if (list.length > 0) page.value++
-  } catch (e) {
-    console.error('Failed to load posts:', e)
+    const res = await getPosts(page.value, 10)
+    const records = res.data.data?.records || []
+    if (records.length < 10) noMore.value = true
+    posts.value.push(...records)
+    page.value++
   } finally {
     loading.value = false
-    refreshing.value = false
   }
 }
 
-function handleScroll() {
-  const scrollTop = window.scrollY || document.documentElement.scrollTop
-  const windowHeight = window.innerHeight
-  const docHeight = document.documentElement.scrollHeight
-  if (docHeight - scrollTop - windowHeight < 200 && hasMore.value && !loading.value) {
+function onCreated(post: any) {
+  posts.value.unshift(post)
+}
+
+async function handleLike(post: any) {
+  try {
+    await likePost(post.id)
+    post.isLiked = !post.isLiked
+    post.likeCount += post.isLiked ? 1 : -1
+  } catch {
+    // ignore
+  }
+}
+
+async function handleDelete(post: any) {
+  try {
+    await deletePost(post.id)
+    posts.value = posts.value.filter((p) => p.id !== post.id)
+  } catch {
+    // ignore
+  }
+}
+
+function goDetail(id: string) {
+  router.push('/post/' + id)
+}
+
+function onScroll() {
+  const { scrollTop, scrollHeight, clientHeight } = document.documentElement
+  if (scrollHeight - scrollTop - clientHeight < 300) {
     loadPosts()
   }
 }
 
-function handleCreated(newPost: any) {
-  posts.value.unshift(newPost)
-}
-
-async function handleLike(postId: string | number) {
-  try {
-    await likePost(postId)
-    const post = posts.value.find(p => p.id === postId)
-    if (post) {
-      post.isLiked = !post.isLiked
-      post.likeCount += post.isLiked ? 1 : -1
-    }
-  } catch (e) {
-    console.error('Failed to like post:', e)
-  }
-}
-
-async function handleDelete(postId: string | number) {
-  try {
-    await deletePost(postId)
-    posts.value = posts.value.filter(p => p.id !== postId)
-  } catch (e) {
-    console.error('Failed to delete post:', e)
-  }
-}
-
-function handleClick(postId: string | number) {
-  router.push('/post/' + postId)
-}
-
-function handleRefresh() {
-  loadPosts(true)
-}
-
 onMounted(() => {
-  loadPosts(true)
-  window.addEventListener('scroll', handleScroll, { passive: true })
+  loadPosts()
+  window.addEventListener('scroll', onScroll, { passive: true })
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
+  window.removeEventListener('scroll', onScroll)
 })
 </script>
 
-<template>
-  <div class="container">
-    <CreatePost @created="handleCreated" />
-    <button class="btn btn-outline btn-sm" @click="handleRefresh" :disabled="refreshing">
-      {{ refreshing ? '刷新中...' : '刷新' }}
-    </button>
-    <div v-if="posts.length === 0 && !loading" class="empty">
-      暂无动态，快来发布第一条吧！
-    </div>
-    <PostCard
-      v-for="post in posts"
-      :key="post.id"
-      :post="post"
-      @like="handleLike"
-      @delete="handleDelete"
-      @click="handleClick"
-    />
-    <div v-if="loading" class="loading">加载中...</div>
-    <div v-if="!hasMore && posts.length > 0" class="empty">没有更多了</div>
-  </div>
-</template>
+<style scoped>
+.container {
+  background: #ededed;
+  min-height: 100vh;
+}
+.empty {
+  text-align: center;
+  padding: 40px 0;
+  color: #999;
+  font-size: 14px;
+}
+.loading {
+  text-align: center;
+  padding: 16px;
+  color: #999;
+  font-size: 14px;
+}
+</style>

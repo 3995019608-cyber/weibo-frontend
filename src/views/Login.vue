@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '../api'
 import { useUserStore } from '../stores/user'
 import { countries } from '../assets/countries'
+import CountrySelect from '../components/CountrySelect.vue'
 import type { Country } from '../assets/countries'
 
 const router = useRouter()
@@ -13,41 +14,10 @@ const phone = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
-const countrySearch = ref('')
-const showDropdown = ref(false)
 
 const selectedCountry = ref<Country>(
   countries.find((c) => c.code === 'CN') ?? countries[0]
 )
-
-const filteredCountries = computed(() => {
-  const q = countrySearch.value.toLowerCase()
-  if (!q) return countries
-  return countries.filter(
-    (c) =>
-      c.name.toLowerCase().includes(q) ||
-      c.dial.includes(q) ||
-      c.code.toLowerCase().includes(q)
-  )
-})
-
-function selectCountry(c: Country) {
-  selectedCountry.value = c
-  showDropdown.value = false
-  countrySearch.value = ''
-}
-
-function toggleDropdown() {
-  showDropdown.value = !showDropdown.value
-  if (showDropdown.value) {
-    countrySearch.value = ''
-  }
-}
-
-function closeDropdown() {
-  showDropdown.value = false
-  countrySearch.value = ''
-}
 
 async function handleSubmit() {
   error.value = ''
@@ -88,48 +58,15 @@ async function handleSubmit() {
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
           <label class="form-label">手机号</label>
-          <div class="phone-input-group">
-            <div class="country-select">
-              <button
-                type="button"
-                class="country-select-btn"
-                @click="toggleDropdown"
-                @blur="closeDropdown"
-              >
-                <span>{{ selectedCountry.flag }}</span>
-                <span>{{ selectedCountry.dial }}</span>
-              </button>
-              <div v-if="showDropdown" class="country-dropdown">
-                <input
-                  v-model="countrySearch"
-                  type="text"
-                  class="form-input"
-                  placeholder="搜索国家/地区"
-                  @blur.stop
-                />
-                <div class="country-options">
-                  <div
-                    v-for="c in filteredCountries"
-                    :key="c.code"
-                    class="country-option"
-                    @mousedown.prevent="selectCountry(c)"
-                  >
-                    <span>{{ c.flag }}</span>
-                    <span>{{ c.name }}</span>
-                    <span>{{ c.dial }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="phone-input-wrapper">
-              <input
-                v-model="phone"
-                type="tel"
-                class="form-input"
-                placeholder="请输入手机号"
-                autocomplete="tel"
-              />
-            </div>
+          <div class="phone-group">
+            <CountrySelect v-model="selectedCountry" />
+            <input
+              v-model="phone"
+              type="tel"
+              class="phone-input"
+              placeholder="请输入手机号"
+              autocomplete="tel"
+            />
           </div>
         </div>
 

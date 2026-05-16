@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { sendSms, register } from '../api'
 import { countries } from '../assets/countries'
+import CountrySelect from '../components/CountrySelect.vue'
 import type { Country } from '../assets/countries'
 
 const router = useRouter()
@@ -18,43 +19,12 @@ const sendingCode = ref(false)
 const countdown = ref(0)
 const error = ref('')
 const success = ref('')
-const countrySearch = ref('')
-const showDropdown = ref(false)
 
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
 const selectedCountry = ref<Country>(
   countries.find((c) => c.code === 'CN') ?? countries[0]
 )
-
-const filteredCountries = computed(() => {
-  const q = countrySearch.value.toLowerCase()
-  if (!q) return countries
-  return countries.filter(
-    (c) =>
-      c.name.toLowerCase().includes(q) ||
-      c.dial.includes(q) ||
-      c.code.toLowerCase().includes(q)
-  )
-})
-
-function selectCountry(c: Country) {
-  selectedCountry.value = c
-  showDropdown.value = false
-  countrySearch.value = ''
-}
-
-function toggleDropdown() {
-  showDropdown.value = !showDropdown.value
-  if (showDropdown.value) {
-    countrySearch.value = ''
-  }
-}
-
-function closeDropdown() {
-  showDropdown.value = false
-  countrySearch.value = ''
-}
 
 function startCountdown() {
   countdown.value = 60
@@ -140,54 +110,19 @@ function goToLogin() {
       <p class="auth-subtitle">创建你的微薄账号</p>
 
       <div v-if="error" class="form-error">{{ error }}</div>
-      <div v-if="success" class="form-success">{{ success }}</div>
 
-      <!-- Step 1: Phone + Country Code -->
       <form v-if="step === 1" @submit.prevent="handleSendCode">
         <div class="form-group">
           <label class="form-label">手机号</label>
-          <div class="phone-input-group">
-            <div class="country-select">
-              <button
-                type="button"
-                class="country-select-btn"
-                @click="toggleDropdown"
-                @blur="closeDropdown"
-              >
-                <span>{{ selectedCountry.flag }}</span>
-                <span>{{ selectedCountry.dial }}</span>
-              </button>
-              <div v-if="showDropdown" class="country-dropdown">
-                <input
-                  v-model="countrySearch"
-                  type="text"
-                  class="form-input"
-                  placeholder="搜索国家/地区"
-                  @blur.stop
-                />
-                <div class="country-options">
-                  <div
-                    v-for="c in filteredCountries"
-                    :key="c.code"
-                    class="country-option"
-                    @mousedown.prevent="selectCountry(c)"
-                  >
-                    <span>{{ c.flag }}</span>
-                    <span>{{ c.name }}</span>
-                    <span>{{ c.dial }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="phone-input-wrapper">
-              <input
-                v-model="phone"
-                type="tel"
-                class="form-input"
-                placeholder="请输入手机号"
-                autocomplete="tel"
-              />
-            </div>
+          <div class="phone-group">
+            <CountrySelect v-model="selectedCountry" />
+            <input
+              v-model="phone"
+              type="tel"
+              class="phone-input"
+              placeholder="请输入手机号"
+              autocomplete="tel"
+            />
           </div>
         </div>
 
@@ -196,15 +131,14 @@ function goToLogin() {
           class="btn btn-primary"
           :disabled="sendingCode"
         >
-          {{ sendingCode ? '发送中...' : '发送验证码' }}
+          {{ sendingCode ? '发送中...' : '获取验证码' }}
         </button>
       </form>
 
-      <!-- Step 2: SMS Code + Password + Confirm Password + Nickname -->
       <form v-if="step === 2" @submit.prevent="handleRegister">
         <div class="form-group">
           <label class="form-label">验证码</label>
-          <div style="display: flex; gap: 8px;">
+          <div class="sms-row">
             <input
               v-model="smsCode"
               type="text"
@@ -214,10 +148,9 @@ function goToLogin() {
             />
             <button
               type="button"
-              class="btn btn-outline"
+              class="sms-btn"
               :disabled="countdown > 0 || sendingCode"
               @click="handleSendCode"
-              style="white-space: nowrap;"
             >
               {{ countdown > 0 ? `${countdown}s` : '重新发送' }}
             </button>
@@ -247,7 +180,7 @@ function goToLogin() {
         </div>
 
         <div class="form-group">
-          <label class="form-label">昵称（选填）</label>
+          <label class="form-label">昵称<span style="color: #999; font-weight: 400;">（选填）</span></label>
           <input
             v-model="nickname"
             type="text"
@@ -265,9 +198,8 @@ function goToLogin() {
         </button>
       </form>
 
-      <!-- Step 3: Success -->
       <div v-if="step === 3" style="text-align: center;">
-        <p class="auth-subtitle">{{ success }}</p>
+        <p class="auth-subtitle" style="color: #07c160;">{{ success }}</p>
         <button
           type="button"
           class="btn btn-primary"
@@ -277,7 +209,7 @@ function goToLogin() {
         </button>
       </div>
 
-      <p class="auth-footer" v-if="step !== 3">
+      <p v-if="step !== 3" class="auth-footer">
         已有账号？
         <router-link to="/login">立即登录</router-link>
       </p>
