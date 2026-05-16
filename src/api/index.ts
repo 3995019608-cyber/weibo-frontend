@@ -78,4 +78,10 @@ export function updateProfile(data: { nickname?: string; bio?: string; avatar?: 
   return api.put('/users/me', data)
 }
 
+export function uploadFile(file: File) {
+  const fd = new FormData()
+  fd.append('file', file)
+  return api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
+
 export default api

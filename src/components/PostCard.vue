@@ -8,7 +8,7 @@
       <div class="post-nickname">{{ post.user?.nickname }}</div>
       <div class="post-time">{{ formatTime(post.createdAt) }}</div>
     </div>
-    <div class="post-content">{{ post.content }}</div>
+    <div class="post-content" v-html="linkify(post.content)"></div>
     <div v-if="imageList.length" class="post-images">
       <img
         v-for="(img, idx) in imageList"
@@ -17,6 +17,19 @@
         class="post-image"
         @click.stop="previewImage(img)"
       />
+    </div>
+    <div v-if="fileList.length" class="post-files">
+      <a
+        v-for="(file, idx) in fileList"
+        :key="idx"
+        :href="file"
+        target="_blank"
+        rel="noopener"
+        class="post-file-link"
+        @click.stop
+      >
+        📎 {{ getFileName(file) }}
+      </a>
     </div>
     <div class="post-actions">
       <div class="post-action" @click.stop="$emit('like')">
@@ -39,6 +52,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { linkify } from '../utils'
 
 interface PostUser {
   id: string
@@ -50,6 +64,7 @@ interface Post {
   id: string
   content: string
   images?: string
+  files?: string
   likeCount: number
   commentCount: number
   repostCount: number
@@ -83,6 +98,22 @@ const imageList = computed(() => {
   if (!props.post.images) return []
   return props.post.images.split(',').filter(Boolean).slice(0, 9)
 })
+
+const fileList = computed(() => {
+  if (!props.post.files) return []
+  return props.post.files.split(',').filter(Boolean)
+})
+
+function getFileName(url: string): string {
+  try {
+    const path = new URL(url).pathname
+    const name = path.split('/').pop() || ''
+    return decodeURIComponent(name)
+  } catch {
+    const parts = url.split('/')
+    return parts[parts.length - 1] || url
+  }
+}
 
 function formatTime(dateStr: string): string {
   if (!dateStr) return ''
@@ -140,9 +171,13 @@ function previewImage(url: string) {
 .post-content {
   font-size: 15px;
   line-height: 1.6;
-  white-space: pre-wrap;
   word-break: break-all;
   margin-bottom: 12px;
+}
+.post-content :deep(a) {
+  color: #576b95;
+  text-decoration: none;
+  word-break: break-all;
 }
 .post-images {
   display: grid;
@@ -155,6 +190,20 @@ function previewImage(url: string) {
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: 2px;
+}
+.post-files {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.post-file-link {
+  font-size: 13px;
+  color: #576b95;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .post-actions {
   display: flex;
