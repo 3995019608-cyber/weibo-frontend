@@ -1,0 +1,516 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+a {
+  color: #e65d3e;
+  text-decoration: none;
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 0 16px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: #e65d3e;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.navbar-actions a, .navbar-actions span {
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #e65d3e;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #d44d2e;
+}
+
+.btn-primary:disabled {
+  background: #f0b0a0;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  background: #fff;
+  color: #e65d3e;
+  border: 1px solid #e65d3e;
+}
+
+.btn-outline:hover {
+  background: #fff5f3;
+}
+
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #666;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus {
+  border-color: #e65d3e;
+}
+
+.form-error {
+  color: #e65d3e;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.phone-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.country-select {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.country-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+.country-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 200;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  min-width: 180px;
+}
+
+.country-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.country-option:hover {
+  background: #f5f5f5;
+}
+
+.country-option.selected {
+  background: #fff5f3;
+  color: #e65d3e;
+}
+
+.phone-input-wrapper {
+  flex: 1;
+}
+
+/* Auth pages */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.auth-title {
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #999;
+}
+
+/* Posts feed */
+.create-post-box {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.create-post-box textarea {
+  width: 100%;
+  border: none;
+  resize: none;
+  font-size: 15px;
+  outline: none;
+  min-height: 80px;
+  padding: 8px 0;
+  font-family: inherit;
+}
+
+.create-post-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.char-count {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.post-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.post-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.post-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e65d3e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.post-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-nickname {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.post-time {
+  font-size: 12px;
+  color: #bbb;
+  margin-top: 2px;
+}
+
+.post-content {
+  font-size: 15px;
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-wrap;
+  margin-bottom: 12px;
+}
+
+.post-images {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.post-images img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.post-actions {
+  display: flex;
+  gap: 32px;
+}
+
+.post-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #999;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+
+.post-action-btn:hover {
+  color: #e65d3e;
+}
+
+.post-action-btn.liked {
+  color: #e65d3e;
+}
+
+.post-action-btn .icon {
+  font-size: 16px;
+}
+
+/* Post detail */
+.comment-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e65d3e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.comment-body {
+  flex: 1;
+}
+
+.comment-nickname {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e65d3e;
+  margin-bottom: 3px;
+}
+
+.comment-content {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.comment-time {
+  font-size: 12px;
+  color: #bbb;
+  margin-top: 4px;
+}
+
+.comment-input-area {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e8e8e8;
+}
+
+.comment-input-area input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+}
+
+.comment-input-area input:focus {
+  border-color: #e65d3e;
+}
+
+/* Profile */
+.profile-header {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 16px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #e65d3e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 auto 12px;
+}
+
+.profile-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.profile-bio {
+  font-size: 14px;
+  color: #999;
+  margin-top: 8px;
+}
+
+/* Loading / Empty */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #ccc;
+  font-size: 14px;
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #ccc;
+  font-size: 15px;
+}
+
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  z-index: 1000;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+  .auth-card {
+    padding: 24px 20px;
+  }
+  .post-actions {
+    gap: 24px;
+  }
+}
