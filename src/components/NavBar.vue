@@ -20,15 +20,12 @@ const avatarInitial = computed(() => {
 <template>
   <nav class="navbar">
     <div class="navbar-left">
-      <button v-if="!isHome" class="navbar-back" @click="router.back()">
-        &lt;
-      </button>
+      <button v-if="!isHome" class="navbar-back" @click="router.back()">‹</button>
     </div>
-    <h1 class="navbar-title">{{ props.title }}</h1>
+    <span class="navbar-title">♡ {{ props.title }} ♡</span>
     <div class="navbar-right">
       <router-link v-if="userStore.isLoggedIn" to="/profile" class="navbar-user">
         <span class="navbar-avatar">{{ avatarInitial }}</span>
-        <span class="navbar-nickname">{{ userStore.user?.nickname || '用户' }}</span>
       </router-link>
     </div>
   </nav>
