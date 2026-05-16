@@ -113,11 +113,15 @@ async function handleSubmit() {
   submitting.value = true
   try {
     const res = await createPost(content.value.trim())
-    emit('created', res.data.data)
-    content.value = ''
-    // clear all drafts for this session
-    drafts.value.forEach((d) => deleteDraft(d.id))
-    drafts.value = []
+    const post = res.data?.data
+    if (post) {
+      emit('created', post)
+      content.value = ''
+      drafts.value.forEach((d) => deleteDraft(d.id))
+      drafts.value = []
+    }
+  } catch (e) {
+    console.error('Post failed:', e)
   } finally {
     submitting.value = false
   }
