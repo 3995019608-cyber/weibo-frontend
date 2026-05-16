@@ -1,10 +1,11 @@
 <template>
   <div class="create-post">
     <textarea
+      ref="textareaRef"
       v-model="content"
-      placeholder="这一刻的想法...，支持粘贴链接和上传文件 ✨"
+      placeholder="这一刻的想法..."
       :maxlength="500"
-      rows="3"
+      rows="2"
     ></textarea>
     <div class="create-post-footer">
       <div class="footer-left">
@@ -12,59 +13,69 @@
           📎
           <input type="file" hidden @change="handleFile" />
         </label>
-        <button class="tool-btn" title="保存草稿" @click="handleSaveDraft">💾</button>
-        <div class="drafts-wrapper">
-          <button class="tool-btn" title="草稿列表" @click="showDrafts = !showDrafts">📂</button>
-          <div v-if="showDrafts && drafts.length" class="drafts-dropdown">
-            <div v-for="draft in drafts" :key="draft.id" class="draft-item" @click="loadDraft(draft)">
-              <span class="draft-text">{{ draft.content.slice(0, 40) || '(空)' }}</span>
-              <span class="draft-time">{{ formatDraftTime(draft.updatedAt) }}</span>
-              <button class="draft-delete" @click.stop="deleteDraft(draft.id)">✕</button>
-            </div>
-          </div>
-        </div>
+        <button class="tool-btn" title="保存草稿" @click="saveDraftLocal">💾</button>
+        <button class="tool-btn" title="草稿列表" @click="showDrafts = !showDrafts">📂</button>
       </div>
       <div class="footer-right">
         <span class="char-count">{{ content.length }}/500</span>
-        <button class="btn btn-primary btn-sm" :disabled="!content.trim() || submitting" @click="handleSubmit">
-          {{ submitting ? '发布中...' : '发布' }}
-        </button>
+        <button
+          class="publish-btn"
+          :disabled="!content.trim() || submitting"
+          @click="handleSubmit"
+        >{{ submitting ? '...' : '发布' }}</button>
       </div>
     </div>
-    <div v-if="error" class="form-error" style="margin-top:8px">{{ error }}</div>
+    <div v-if="showDrafts && localDrafts.length" class="drafts-dropdown">
+      <div v-for="d in localDrafts" :key="d.id" class="draft-item" @click="loadDraft(d)">
+        <span class="draft-text">{{ d.content.slice(0, 40) || '(空)' }}</span>
+        <button class="draft-delete" @click.stop="removeDraft(d.id)">✕</button>
+      </div>
+    </div>
+    <div v-if="error" class="form-error">{{ error }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { createPost, uploadFile } from '../api'
-import { saveDraft, getDrafts, deleteDraft } from '../utils/drafts'
-import type { Draft } from '../utils/drafts'
+import { ref } from 'vue'
+import axios from 'axios'
 
-const emit = defineEmits<{ created: [post: unknown] }>()
+const emit = defineEmits<{ created: [post: any] }>()
 
 const content = ref('')
 const submitting = ref(false)
 const showDrafts = ref(false)
-const drafts = ref<Draft[]>([])
 const error = ref('')
+const localDrafts = ref<{ id: string; content: string }[]>([])
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
+loadDraftsFromStorage()
 
-function refreshDrafts() {
-  drafts.value = getDrafts()
+function loadDraftsFromStorage() {
+  try {
+    const raw = localStorage.getItem('blog_drafts')
+    localDrafts.value = raw ? JSON.parse(raw) : []
+  } catch { localDrafts.value = [] }
 }
 
-refreshDrafts()
+function saveDraftsToStorage() {
+  localStorage.setItem('blog_drafts', JSON.stringify(localDrafts.value))
+}
 
-watch(content, (val) => {
-  if (!val.trim()) return
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    saveDraft({ id: '', content: val, updatedAt: '' })
-    refreshDrafts()
-  }, 2000)
-})
+function saveDraftLocal() {
+  if (!content.value.trim()) return
+  localDrafts.value.unshift({ id: Date.now().toString(36), content: content.value.trim() })
+  if (localDrafts.value.length > 20) localDrafts.value = localDrafts.value.slice(0, 20)
+  saveDraftsToStorage()
+}
+
+function loadDraft(d: { id: string; content: string }) {
+  content.value = d.content
+  showDrafts.value = false
+}
+
+function removeDraft(id: string) {
+  localDrafts.value = localDrafts.value.filter(d => d.id !== id)
+  saveDraftsToStorage()
+}
 
 async function handleFile(e: Event) {
   const input = e.target as HTMLInputElement
@@ -72,29 +83,20 @@ async function handleFile(e: Event) {
   if (!file) return
   error.value = ''
   try {
-    const res = await uploadFile(file)
-    const url = res.data?.data?.url || res.data?.url
-    if (url) {
-      content.value = content.value + (content.value ? '\n' : '') + url
-    } else {
-      error.value = '上传失败：' + (res.data?.message || '未知错误')
-    }
+    const fd = new FormData()
+    fd.append('file', file)
+    const token = localStorage.getItem('token') || ''
+    const isDev = window.location.hostname === 'localhost'
+    const base = isDev ? '/api' : 'https://tian-kong-9-weibo-backend.hf.space/api'
+    const res = await axios.post(base + '/upload', fd, {
+      headers: { Authorization: token ? `Bearer ${token}` : '' }
+    })
+    const url = res.data?.data?.url
+    if (url) content.value = content.value + (content.value ? '\n' : '') + url
+    else error.value = res.data?.message || '上传失败'
   } catch (e: any) {
-    error.value = '上传失败，请重新登录'
-  } finally {
-    input.value = ''
-  }
-}
-
-function handleSaveDraft() {
-  if (!content.value.trim()) return
-  saveDraft({ id: '', content: content.value, updatedAt: '' })
-  refreshDrafts()
-}
-
-function loadDraft(draft: Draft) {
-  content.value = draft.content
-  showDrafts.value = false
+    error.value = e.response?.data?.message || '上传失败'
+  } finally { input.value = '' }
 }
 
 async function handleSubmit() {
@@ -102,64 +104,63 @@ async function handleSubmit() {
   error.value = ''
   submitting.value = true
   try {
-    const res = await createPost(content.value.trim())
-    const post = res.data?.data
-    if (post) {
-      emit('created', post)
+    const token = localStorage.getItem('token') || ''
+    const isDev = window.location.hostname === 'localhost'
+    const base = isDev ? '/api' : 'https://tian-kong-9-weibo-backend.hf.space/api'
+    const res = await axios.post(base + '/posts', { content: content.value.trim() }, {
+      headers: { Authorization: token ? `Bearer ${token}` : '' }
+    })
+    if (res.data?.code === 200 && res.data?.data) {
+      emit('created', res.data.data)
       content.value = ''
-      drafts.value.forEach((d) => deleteDraft(d.id))
-      drafts.value = []
+      localDrafts.value = []
+      saveDraftsToStorage()
     } else {
-      error.value = res.data?.message || '发布失败，请重新登录后重试'
+      error.value = res.data?.message || '发布失败'
     }
   } catch (e: any) {
-    error.value = e.response?.data?.message || '网络错误，请检查网络连接'
-  } finally {
-    submitting.value = false
-  }
-}
-
-function formatDraftTime(dateStr: string): string {
-  if (!dateStr) return ''
-  const d = new Date(dateStr)
-  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    if (e.response?.status === 401) {
+      error.value = '登录已过期，请重新登录'
+      setTimeout(() => { window.location.href = '/login' }, 1500)
+    } else {
+      error.value = e.response?.data?.message || '网络错误'
+    }
+  } finally { submitting.value = false }
 }
 </script>
 
 <style scoped>
 .create-post {
-  background: #fff;
-  padding: 12px 16px;
-  margin-bottom: 10px;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(176,126,222,0.08);
+  background: #fff; border-radius: 14px; padding: 14px 16px;
+  margin-bottom: 10px; box-shadow: 0 2px 12px rgba(176,126,222,0.08);
+  position: relative;
 }
 .create-post textarea {
   width: 100%; border: none; outline: none; resize: none;
-  font-size: 15px; line-height: 1.6; padding: 6px 0;
-  min-height: 40px; font-family: inherit; color: #4A3548;
+  font-size: 15px; line-height: 1.6; padding: 4px 0;
+  min-height: 36px; font-family: inherit; color: #4A3548;
 }
 .create-post textarea::placeholder { color: #C4A8B5; }
 .create-post-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 8px; }
-.footer-left { display: flex; align-items: center; gap: 4px; }
+.footer-left { display: flex; align-items: center; gap: 6px; }
 .footer-right { display: flex; align-items: center; gap: 8px; }
-.tool-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px 6px; line-height: 1; position: relative; }
+.tool-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px 6px; }
 .tool-btn input[type="file"] { display: none; }
-.drafts-wrapper { position: relative; }
-.drafts-dropdown {
-  position: absolute; top: 100%; left: 0; background: #fff; border: 1px solid #F2E0E8;
-  border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-  min-width: 220px; max-height: 240px; overflow-y: auto; z-index: 20;
+.char-count { font-size: 12px; color: #C4A8B5; }
+.publish-btn {
+  background: linear-gradient(135deg, #FF6B9D, #B07EDE);
+  color: #fff; border: none; border-radius: 18px;
+  padding: 6px 20px; font-size: 13px; font-weight: 600; cursor: pointer;
 }
-.draft-item { display: flex; align-items: center; gap: 6px; padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+.publish-btn:disabled { background: #E8D5F0; cursor: not-allowed; }
+.drafts-dropdown {
+  position: absolute; left: 16px; right: 16px; top: 100%; background: #fff;
+  border: 1px solid #F2E0E8; border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 20;
+}
+.draft-item { display: flex; align-items: center; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
 .draft-item:hover { background: #FFF0F5; }
-.draft-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.draft-time { color: #C4A8B5; font-size: 11px; flex-shrink: 0; }
+.draft-text { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .draft-delete { background: none; border: none; color: #ccc; font-size: 14px; cursor: pointer; }
-.draft-delete:hover { color: #FF6B8A; }
-.char-count { font-size: 13px; color: #C4A8B5; }
-.btn { border: none; cursor: pointer; border-radius: 20px; font-weight: 600; }
-.btn-primary { background: linear-gradient(135deg, #FF6B9D, #B07EDE); color: #fff; }
-.btn-primary:disabled { background: #E8D5F0; }
-.btn-sm { padding: 6px 18px; font-size: 13px; }
+.form-error { color: #FF6B8A; font-size: 13px; margin-top: 8px; }
 </style>
